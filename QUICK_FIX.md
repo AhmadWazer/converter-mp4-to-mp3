@@ -1,9 +1,21 @@
 # 🚀 Quick Fix Guide: Vercel Deployment Issues
 
-## 📋 Two Common Issues
+## 📋 Common Issues
 
 1. **DNS_HOSTNAME_RESOLVED_PRIVATE** - See section below
 2. **FFmpeg Binary Not Found** - See `QUICK_FIX_FFMPEG.md`
+3. **Functions/Builds Conflict** - See `VERCEL_CONFIG_FIX.md`
+
+### ⚡ Quick Fix: Functions/Builds Error
+
+**Error:** `The functions property cannot be used in conjunction with the builds property`
+
+**Fix:** ✅ Already fixed! Removed `functions` property from `vercel.json`
+
+**Next Step:** Configure function settings via Vercel Dashboard:
+1. Go to: Project → Settings → Functions
+2. Set `maxDuration`: 300 seconds
+3. Set `memory`: 3008 MB (if on Pro plan)
 
 ---
 
