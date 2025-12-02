@@ -481,6 +481,20 @@
                 showError('File size must be less than 500MB');
                 return;
             }
+            
+            // Warn about Vercel's 4.5MB limit if on Vercel
+            const isVercel = window.location.hostname.includes('vercel.app');
+            if (isVercel && file.size > 4.5 * 1024 * 1024) {
+                const proceed = confirm(
+                    'Warning: This file is larger than 4.5MB.\n\n' +
+                    'Vercel has a hard 4.5MB request body limit. Files over 4.5MB will be rejected.\n\n' +
+                    'For larger files, use local deployment (run `npm start` locally).\n\n' +
+                    'Do you want to try anyway?'
+                );
+                if (!proceed) {
+                    return;
+                }
+            }
 
             selectedFile = file;
             updateFileInfo(file);
@@ -651,6 +665,19 @@
 
                 // Check response status first
                 if (!response.ok) {
+                    // Handle HTTP 413 specifically (Vercel's request body limit)
+                    if (response.status === 413) {
+                        const isVercel = window.location.hostname.includes('vercel.app');
+                        let errorMessage = 'File size exceeds the limit. ';
+                        if (isVercel) {
+                            errorMessage += 'Vercel has a hard 4.5MB request body limit that cannot be changed. ';
+                            errorMessage += 'For files larger than 4.5MB, please use local deployment (run `npm start` locally).';
+                        } else {
+                            errorMessage += 'Maximum file size is 500MB.';
+                        }
+                        throw new Error(errorMessage);
+                    }
+                    
                     let errorMessage = `HTTP ${response.status}`;
                     try {
                         const errorData = await response.json();
