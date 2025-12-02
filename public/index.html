@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP4 to MP3 Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.8em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+
+        .upload-area {
+            border: 3px dashed #e0e0e0;
+            border-radius: 15px;
+            padding: 50px 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f2ff 0%, #ffffff 100%);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #ddd;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: #667eea;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .upload-text strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .file-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .file-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .convert-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 25px;
+            display: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .convert-btn:active {
+            transform: translateY(0);
+        }
+
+        .convert-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .convert-btn.converting {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+        }
+
+        .convert-btn.converting::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-container {
+            margin-top: 25px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.4s ease;
+            border-radius: 5px;
+        }
+
+        .progress-text {
+            color: #666;
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 25px;
+            border-radius: 15px;
+            display: none;
+            text-align: left;
+        }
+
+        .result.success {
+            background: linear-gradient(135deg, #d4edda 0%, #ffffff 100%);
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #ffffff 100%);
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .result-message {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 25px;
+            display: inline-block;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .footer {
+            margin-top: 40px;
+            color: #999;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .supported-formats {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .formats-list {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 8px;
+        }
+
+        .format-tag {
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2.2em;
+            }
+
+            .upload-area {
+                padding: 35px 20px;
+            }
+
+            .upload-icon {
+                font-size: 3em;
+            }
+
+            .formats-list {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <h1>🎵 MP4 to MP3</h1>
+        <p class="subtitle">Convert your video files to high-quality MP3 audio instantly</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+                <strong>Choose a video file</strong> or drag & drop here
+            </div>
+            <input type="file" id="fileInput" accept=".mp4,.avi,.mov,.wmv,.m4v" hidden>
+        </div>
+
+        <div class="supported-formats">
+            <strong>Supported formats:</strong>
+            <div class="formats-list">
+                <span class="format-tag">MP4</span>
+                <span class="format-tag">AVI</span>
+                <span class="format-tag">MOV</span>
+                <span class="format-tag">WMV</span>
+            </div>
+            <div style="margin-top: 8px; font-size: 0.8em;">
+                Maximum file size: 500MB
+            </div>
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName">No file selected</div>
+            <div class="file-details">
+                <span id="fileSize">0 MB</span>
+                <span id="fileType">Unknown</span>
+            </div>
+        </div>
+
+        <button class="convert-btn" id="convertBtn">
+            Convert to MP3
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Preparing conversion...</div>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-icon" id="resultIcon">🎉</div>
+            <div class="result-title" id="resultTitle">Conversion Complete!</div>
+            <div class="result-message" id="resultMessage">
+                Your video has been successfully converted to MP3 format.
+            </div>
+            <a href="#" class="download-btn" id="downloadBtn">
+                📥 Download MP3
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>Built with FFmpeg & Node.js |
+            <a href="/api/health" target="_blank">API Status</a> |
+            <button onclick="testSuccess()" style="background: none; border: none; color: #667eea; cursor: pointer; text-decoration: underline; padding: 0; margin: 0;">Test Success</button> |
+            <button onclick="debugDownload()" style="background: none; border: none; color: #667eea; cursor: pointer; text-decoration: underline; padding: 0; margin: 0;">Debug</button></p>
+        </div>
+
+        <script>
+            function testSuccess() {
+                showSuccess(
+                    'Test conversion successful!',
+                    '/api/download/test.mp3',
+                    'test.mp4'
+                );
+            }
+        </script>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileType = document.getElementById('fileType');
+        const convertBtn = document.getElementById('convertBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const result = document.getElementById('result');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let selectedFile = null;
+
+        // Upload area interactions
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            const allowedTypes = ['video/mp4', 'audio/mp4', 'video/avi', 'video/mov', 'video/wmv'];
+            const allowedExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.m4v'];
+
+            const mimeTypeValid = allowedTypes.includes(file.type);
+            const extensionValid = allowedExtensions.includes(file.name.toLowerCase().substring(file.name.lastIndexOf('.')));
+
+            if (!mimeTypeValid && !extensionValid) {
+                showError('Please select a valid video file (MP4, AVI, MOV, or WMV)');
+                return;
+            }
+
+            if (file.size > 500 * 1024 * 1024) { // 500MB
+                showError('File size must be less than 500MB');
+                return;
+            }
+
+            selectedFile = file;
+            updateFileInfo(file);
+            convertBtn.style.display = 'block';
+            result.classList.add('hidden');
+        }
+
+        function updateFileInfo(file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileType.textContent = file.type || 'Unknown';
+            fileInfo.style.display = 'block';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function showError(message) {
+            result.classList.remove('hidden', 'success');
+            result.classList.add('error');
+            resultIcon.textContent = '❌';
+            resultTitle.textContent = 'Error';
+            resultMessage.textContent = message;
+            downloadBtn.style.display = 'none';
+        }
+
+        function showSuccess(message, downloadUrl, originalName) {
+            console.log('showSuccess called with:', { message, downloadUrl, originalName });
+            console.log('Download button element exists:', !!downloadBtn);
+            console.log('Result element exists:', !!result);
+
+            try {
+                // Force show the result container
+                result.style.display = 'block';
+                result.classList.remove('hidden', 'error');
+                result.classList.add('success');
+
+                // Update content
+                resultIcon.textContent = '✅';
+                resultTitle.textContent = 'Conversion Complete!';
+                resultMessage.textContent = message;
+
+                // Set download link - ensure no automatic download
+                const fullUrl = downloadUrl + `?original=${encodeURIComponent(originalName)}`;
+                downloadBtn.href = fullUrl;
+                downloadBtn.target = '_blank'; // Prevent navigation, force download
+                downloadBtn.download = originalName.replace(/\.[^/.]+$/, '') + '.mp3'; // Force download attribute
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.textContent = '📥 Download MP3';
+
+                // Force visibility with !important override
+                downloadBtn.style.setProperty('display', 'inline-block', 'important');
+                downloadBtn.style.visibility = 'visible';
+                downloadBtn.style.opacity = '1';
+
+                console.log('Download button should now be visible:', downloadBtn.style.display);
+                console.log('Download button href:', downloadBtn.href);
+                console.log('Download button download attr:', downloadBtn.download);
+                console.log('Download button text:', downloadBtn.textContent);
+
+                // Add a click handler to refresh page after download
+                downloadBtn.onclick = function(e) {
+                    console.log('Download button clicked, navigating to:', fullUrl);
+                    // Don't prevent default - let the download happen
+
+                    // Show feedback to user and prepare for refresh
+                    downloadBtn.textContent = '📥 Downloading...';
+                    downloadBtn.disabled = true;
+
+                    // Update the result message to indicate refresh is coming
+                    resultMessage.innerHTML = 'Download started! Page will refresh in a moment for the next conversion...';
+
+                    // Refresh the page after a short delay to allow download to start
+                    // This gives the user a clean interface for the next conversion
+                    setTimeout(() => {
+                        console.log('Refreshing page after download...');
+                        window.location.reload();
+                    }, 2500); // 2.5 seconds should be enough for download to start
+                };
+
+                // Force DOM update
+                downloadBtn.offsetHeight; // Trigger reflow
+
+                // Double-check visibility after a short delay
+                setTimeout(() => {
+                    if (downloadBtn.style.display !== 'inline-block') {
+                        console.log('Fixing download button visibility...');
+                        downloadBtn.style.display = 'inline-block';
+                        downloadBtn.style.visibility = 'visible';
+                    }
+                    console.log('Final download button state:', {
+                        display: downloadBtn.style.display,
+                        visibility: downloadBtn.style.visibility,
+                        opacity: downloadBtn.style.opacity,
+                        href: downloadBtn.href
+                    });
+                }, 100);
+
+            } catch (error) {
+                console.error('Error in showSuccess function:', error);
+                // Fallback: show a simple download link in the result message
+                result.style.display = 'block';
+                result.classList.remove('hidden', 'error');
+                result.classList.add('success');
+                resultIcon.textContent = '✅';
+                resultTitle.textContent = 'Conversion Complete!';
+                resultMessage.innerHTML = message + '<br><br><a href="' + downloadUrl + '?original=' + encodeURIComponent(originalName) + '" class="download-btn" style="display: inline-block; text-decoration: none;">📥 Click here to download MP3</a>';
+            }
+        }
+
+        // Add test function to window
+        window.testSuccess = function() {
+            console.log('Testing success UI...');
+            showSuccess(
+                'Test conversion successful!',
+                '/api/download/test.mp3',
+                'test.mp4'
+            );
+        };
+
+        // Add debug function
+        window.debugDownload = function() {
+            console.log('=== DEBUG INFO ===');
+            console.log('Result element:', document.getElementById('result'));
+            console.log('Result classes:', document.getElementById('result').className);
+            console.log('Result display:', document.getElementById('result').style.display);
+            console.log('Download button:', document.getElementById('downloadBtn'));
+            console.log('Download button display:', document.getElementById('downloadBtn').style.display);
+            console.log('Download button href:', document.getElementById('downloadBtn').href);
+            console.log('==================');
+        };
+
+        // Convert button handler
+        convertBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // Reset UI
+            result.classList.add('hidden');
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Preparing conversion...';
+
+            // Update button state
+            convertBtn.disabled = true;
+            convertBtn.classList.add('converting');
+            convertBtn.textContent = 'Converting...';
+
+            try {
+                const formData = new FormData();
+                formData.append('video', selectedFile);
+
+                progressText.textContent = 'Uploading file...';
+                progressFill.style.width = '25%';
+
+                const response = await fetch('/api/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressFill.style.width = '75%';
+                progressText.textContent = 'Converting to MP3...';
+
+                // Check response status first
+                if (!response.ok) {
+                    let errorMessage = `HTTP ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorData.error || errorMessage;
+                    } catch (e) {
+                        // If we can't parse JSON, use the status text
+                        errorMessage = response.statusText || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                console.log('Response content-type:', response.headers.get('content-type'));
+
+                // Check if response is JSON or a file download
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    let data;
+                    try {
+                        data = await response.json();
+                        console.log('Parsed JSON response data:', data);
+                    } catch (parseError) {
+                        console.error('Failed to parse JSON response:', parseError);
+                        throw new Error('Invalid JSON response from server');
+                    }
+
+                    if (data.success) {
+                        console.log('Success condition met, showing success UI');
+                        progressFill.style.width = '100%';
+                        progressText.textContent = 'Conversion completed!';
+
+                        // Show success
+                        showSuccess(
+                            `Successfully converted "${data.originalName}" to MP3 format.`,
+                            data.downloadUrl,
+                            data.originalName
+                        );
+                    } else {
+                        console.log('Success condition not met:', data);
+                        throw new Error(data.message || 'Conversion failed');
+                    }
+                } else {
+                    // If it's not JSON, it might be a file download (unexpected)
+                    console.error('Unexpected response type:', contentType);
+                    const responseText = await response.text();
+                    console.error('Response content (first 200 chars):', responseText.substring(0, 200));
+                    throw new Error('Server returned unexpected response type: ' + contentType);
+                }
+
+            } catch (error) {
+                console.error('Conversion error:', error);
+                console.error('Error type:', typeof error);
+                console.error('Error stack:', error.stack);
+                let errorMessage = error.message;
+
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Cannot connect to server. Please make sure the server is running.';
+                } else if (error.message.includes('ffmpeg')) {
+                    errorMessage = 'FFmpeg error. Please check FFmpeg installation.';
+                }
+
+                console.log('Showing error message:', errorMessage);
+                showError(`Conversion failed: ${errorMessage}`);
+            } finally {
+                // Reset UI
+                convertBtn.disabled = false;
+                convertBtn.classList.remove('converting');
+                convertBtn.textContent = 'Convert to MP3';
+                progressContainer.style.display = 'none';
+                downloadBtn.style.display = 'block';
+            }
+        });
+
+        // Auto-hide result after successful download
+        downloadBtn.addEventListener('click', () => {
+            setTimeout(() => {
+                result.classList.add('hidden');
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
