@@ -1,4 +1,13 @@
-# 🚀 Quick Fix Guide: DNS_HOSTNAME_RESOLVED_PRIVATE
+# 🚀 Quick Fix Guide: Vercel Deployment Issues
+
+## 📋 Two Common Issues
+
+1. **DNS_HOSTNAME_RESOLVED_PRIVATE** - See section below
+2. **FFmpeg Binary Not Found** - See `QUICK_FIX_FFMPEG.md`
+
+---
+
+## 1️⃣ DNS_HOSTNAME_RESOLVED_PRIVATE
 
 ## ⚡ Immediate Fix (5 minutes)
 

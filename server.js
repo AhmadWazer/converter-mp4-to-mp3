@@ -303,9 +303,19 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log('🎵 MP4 to MP3 Converter Server');
   console.log('==============================');
-  console.log(`Server running on: http://localhost:${PORT}`);
-  console.log(`FFmpeg path: ${ffmpegStatic}`);
-  console.log(`FFmpeg available: ${fs.existsSync(ffmpegStatic) ? '✅' : '❌'}`);
+  if (!isVercel) {
+    console.log(`Server running on: http://localhost:${PORT}`);
+  } else {
+    console.log('Running on Vercel serverless environment');
+  }
+  console.log(`Environment: ${isVercel ? 'Vercel' : 'Local'}`);
+  console.log(`Base directory: ${baseDir}`);
+  console.log(`FFmpeg path: ${ffmpegPath}`);
+  console.log(`FFmpeg available: ${fs.existsSync(ffmpegPath) ? '✅' : '❌'}`);
+  if (!fs.existsSync(ffmpegPath)) {
+    console.warn('⚠️  WARNING: FFmpeg binary not found. Conversion will fail.');
+    console.warn('   This is common on Vercel. See VERCEL_FFMPEG_FIX.md for solutions.');
+  }
   console.log('');
   console.log('Ready to convert MP4 files to MP3!');
 });
