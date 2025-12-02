@@ -81,14 +81,10 @@ const storage = multer.diskStorage({
   }
 });
 
-// Vercel has a 4.5MB request body limit for serverless functions
-// This is a hard limit that cannot be changed
-const MAX_FILE_SIZE = process.env.VERCEL ? 4 * 1024 * 1024 : 500 * 1024 * 1024; // 4MB on Vercel, 500MB locally
-
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: MAX_FILE_SIZE,
+    fileSize: 500 * 1024 * 1024, // 500MB limit
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['video/mp4', 'audio/mp4', 'video/avi', 'video/mov', 'video/wmv'];
@@ -287,28 +283,22 @@ app.get('/api/download/:filename', (req, res) => {
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      const maxSize = process.env.VERCEL ? '4MB' : '500MB';
-      const reason = process.env.VERCEL 
-        ? 'Vercel serverless functions have a 4.5MB request body limit. For larger files, consider using local deployment or cloud storage.'
-        : 'File exceeds the maximum allowed size.';
-      
-      return res.status(413).json({
+      return res.status(400).json({
         success: false,
         error: 'File too large',
-        message: `Maximum file size is ${maxSize}. ${reason}`,
-        maxSize: maxSize,
-        isVercel: !!process.env.VERCEL
+        message: 'Maximum file size is 500MB'
       });
     }
   }
 
-  // Handle HTTP 413 from Vercel/proxy
+  // Handle HTTP 413 from Vercel/proxy (Vercel's hard 4.5MB limit)
   if (error.status === 413 || error.statusCode === 413) {
     return res.status(413).json({
       success: false,
       error: 'Request too large',
-      message: 'File size exceeds Vercel\'s 4.5MB limit. For larger files, use local deployment or consider chunked uploads.',
-      maxSize: '4.5MB',
+      message: 'File size exceeds Vercel\'s 4.5MB request body limit. The application supports up to 500MB, but Vercel serverless functions have a hard 4.5MB limit. For larger files, use local deployment.',
+      maxSize: '4.5MB (Vercel limit)',
+      appLimit: '500MB',
       isVercel: !!process.env.VERCEL
     });
   }
