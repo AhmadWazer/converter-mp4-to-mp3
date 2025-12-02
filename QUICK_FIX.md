@@ -5,6 +5,21 @@
 1. **DNS_HOSTNAME_RESOLVED_PRIVATE** - See section below
 2. **FFmpeg Binary Not Found** - See `QUICK_FIX_FFMPEG.md`
 3. **Functions/Builds Conflict** - See `VERCEL_CONFIG_FIX.md`
+4. **404 NOT_FOUND** - See `VERCEL_404_FIX.md`
+
+### ⚡ Quick Fix: 404 NOT_FOUND Error
+
+**Error:** `404: NOT_FOUND` when accessing Vercel deployment
+
+**Fix:** ✅ Already fixed! 
+- Reordered routes in `vercel.json` (specific → general)
+- Added explicit root route
+- Fixed Express app export for serverless
+
+**Test:**
+```bash
+curl https://your-app.vercel.app/api/health
+```
 
 ### ⚡ Quick Fix: Functions/Builds Error
 
