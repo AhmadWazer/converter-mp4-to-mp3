@@ -8,7 +8,9 @@
     "dev": "node server.js",
     "setup": "node setup.js",
     "test": "node test.js",
-    "test-conversion": "node test_conversion.js"
+    "test-conversion": "node test_conversion.js",
+    "check-dns": "node check-dns-issues.js",
+    "vercel-build": "echo 'Build complete'"
   },
   "keywords": [
     "mp4",
