@@ -364,7 +364,7 @@
                 <span class="format-tag">WMV</span>
             </div>
             <div style="margin-top: 8px; font-size: 0.8em;">
-                Maximum file size: 500MB
+                Maximum file size: <span id="maxFileSizeDisplay">4MB on Vercel, 500MB locally</span>
             </div>
         </div>
 
@@ -432,6 +432,16 @@
         const resultTitle = document.getElementById('resultTitle');
         const resultMessage = document.getElementById('resultMessage');
         const downloadBtn = document.getElementById('downloadBtn');
+        const maxFileSizeDisplay = document.getElementById('maxFileSizeDisplay');
+
+        // Update max file size display based on environment
+        if (maxFileSizeDisplay) {
+            if (window.location.hostname.includes('vercel.app')) {
+                maxFileSizeDisplay.textContent = '4MB (Vercel limit)';
+            } else {
+                maxFileSizeDisplay.textContent = '500MB';
+            }
+        }
 
         let selectedFile = null;
 
@@ -476,8 +486,14 @@
                 return;
             }
 
-            if (file.size > 500 * 1024 * 1024) { // 500MB
-                showError('File size must be less than 500MB');
+            // Check file size - Vercel has 4.5MB limit, local has 500MB limit
+            const maxSize = window.location.hostname.includes('vercel.app') 
+                ? 4 * 1024 * 1024  // 4MB on Vercel
+                : 500 * 1024 * 1024; // 500MB locally
+            
+            if (file.size > maxSize) {
+                const maxSizeMB = window.location.hostname.includes('vercel.app') ? '4MB' : '500MB';
+                showError(`File size must be less than ${maxSizeMB}. ${window.location.hostname.includes('vercel.app') ? 'Vercel has a 4.5MB request limit. For larger files, use local deployment.' : ''}`);
                 return;
             }
 

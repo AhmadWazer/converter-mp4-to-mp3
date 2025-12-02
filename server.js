@@ -48,8 +48,8 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '4.5mb' })); // Vercel limit
+app.use(express.urlencoded({ extended: true, limit: '4.5mb' })); // Vercel limit
 app.use(express.static('public'));
 
 // Ensure directories exist - use /tmp on Vercel (writable directory)
@@ -81,10 +81,14 @@ const storage = multer.diskStorage({
   }
 });
 
+// Vercel has a 4.5MB request body limit for serverless functions
+// This is a hard limit that cannot be changed
+const MAX_FILE_SIZE = process.env.VERCEL ? 4 * 1024 * 1024 : 500 * 1024 * 1024; // 4MB on Vercel, 500MB locally
+
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB limit
+    fileSize: MAX_FILE_SIZE,
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['video/mp4', 'audio/mp4', 'video/avi', 'video/mov', 'video/wmv'];
@@ -283,12 +287,30 @@ app.get('/api/download/:filename', (req, res) => {
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
+      const maxSize = process.env.VERCEL ? '4MB' : '500MB';
+      const reason = process.env.VERCEL 
+        ? 'Vercel serverless functions have a 4.5MB request body limit. For larger files, consider using local deployment or cloud storage.'
+        : 'File exceeds the maximum allowed size.';
+      
+      return res.status(413).json({
         success: false,
         error: 'File too large',
-        message: 'Maximum file size is 500MB'
+        message: `Maximum file size is ${maxSize}. ${reason}`,
+        maxSize: maxSize,
+        isVercel: !!process.env.VERCEL
       });
     }
+  }
+
+  // Handle HTTP 413 from Vercel/proxy
+  if (error.status === 413 || error.statusCode === 413) {
+    return res.status(413).json({
+      success: false,
+      error: 'Request too large',
+      message: 'File size exceeds Vercel\'s 4.5MB limit. For larger files, use local deployment or consider chunked uploads.',
+      maxSize: '4.5MB',
+      isVercel: !!process.env.VERCEL
+    });
   }
 
   console.error('Server error:', error);
