@@ -6,6 +6,20 @@
 2. **FFmpeg Binary Not Found** - See `QUICK_FIX_FFMPEG.md`
 3. **Functions/Builds Conflict** - See `VERCEL_CONFIG_FIX.md`
 4. **404 NOT_FOUND** - See `VERCEL_404_FIX.md`
+5. **Builds Warning** - See `VERCEL_BUILDS_WARNING.md`
+
+### ⚡ Quick Fix: Builds Warning
+
+**Warning:** `Due to builds existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply.`
+
+**Status:** ✅ **This is fine!** Just an informational warning, not an error.
+
+**What it means:**
+- Your app works perfectly ✅
+- Dashboard Build Settings won't apply (but you don't need them)
+- This is normal for Express apps using `builds`
+
+**Action:** **Ignore it** - your configuration is correct for Express apps!
 
 ### ⚡ Quick Fix: 404 NOT_FOUND Error
 
