@@ -505,10 +505,11 @@
         function showError(message) {
             result.classList.remove('hidden', 'success');
             result.classList.add('error');
+            result.style.setProperty('display', 'block', 'important');
             resultIcon.textContent = '❌';
             resultTitle.textContent = 'Error';
             resultMessage.textContent = message;
-            downloadBtn.style.display = 'none';
+            downloadBtn.style.setProperty('display', 'none', 'important');
         }
 
         function showSuccess(message, downloadUrl, originalName) {
@@ -517,10 +518,11 @@
             console.log('Result element exists:', !!result);
 
             try {
-                // Force show the result container
-                result.style.display = 'block';
+                // Force show the result container - remove hidden class first
                 result.classList.remove('hidden', 'error');
                 result.classList.add('success');
+                // Use setProperty with important to override !important in CSS
+                result.style.setProperty('display', 'block', 'important');
 
                 // Update content
                 resultIcon.textContent = '✅';
@@ -532,13 +534,12 @@
                 downloadBtn.href = fullUrl;
                 downloadBtn.target = '_blank'; // Prevent navigation, force download
                 downloadBtn.download = originalName.replace(/\.[^/.]+$/, '') + '.mp3'; // Force download attribute
-                downloadBtn.style.display = 'inline-block';
                 downloadBtn.textContent = '📥 Download MP3';
 
-                // Force visibility with !important override
+                // Force visibility with !important override - must be visible
                 downloadBtn.style.setProperty('display', 'inline-block', 'important');
-                downloadBtn.style.visibility = 'visible';
-                downloadBtn.style.opacity = '1';
+                downloadBtn.style.setProperty('visibility', 'visible', 'important');
+                downloadBtn.style.setProperty('opacity', '1', 'important');
 
                 console.log('Download button should now be visible:', downloadBtn.style.display);
                 console.log('Download button href:', downloadBtn.href);
@@ -719,7 +720,7 @@
                 convertBtn.classList.remove('converting');
                 convertBtn.textContent = 'Convert to MP3';
                 progressContainer.style.display = 'none';
-                downloadBtn.style.display = 'block';
+                // Don't force display here - let showSuccess handle it
             }
         });
 
