@@ -10,8 +10,41 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure FFmpeg to use the static binary
-ffmpeg.setFfmpegPath(ffmpegStatic);
+// Configure FFmpeg path - handle Vercel serverless environment
+function getFfmpegPath() {
+  // Check if ffmpeg-static path exists
+  if (ffmpegStatic && fs.existsSync(ffmpegStatic)) {
+    return ffmpegStatic;
+  }
+  
+  // Try alternative paths for Vercel/serverless
+  const possiblePaths = [
+    ffmpegStatic, // Original path
+    path.join(__dirname, 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    path.join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    '/usr/bin/ffmpeg', // System ffmpeg (if available)
+    '/usr/local/bin/ffmpeg',
+  ];
+  
+  for (const possiblePath of possiblePaths) {
+    if (possiblePath && fs.existsSync(possiblePath)) {
+      console.log(`Found FFmpeg at: ${possiblePath}`);
+      return possiblePath;
+    }
+  }
+  
+  // Last resort: use the path from ffmpeg-static even if file doesn't exist
+  // This might work if the path resolution is the issue
+  if (ffmpegStatic) {
+    console.warn(`FFmpeg path not found, using: ${ffmpegStatic}`);
+    return ffmpegStatic;
+  }
+  
+  throw new Error('FFmpeg binary not found. Please ensure ffmpeg-static is installed.');
+}
+
+const ffmpegPath = getFfmpegPath();
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Middleware
 app.use(cors());
@@ -19,12 +52,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Ensure directories exist
-const uploadsDir = path.join(__dirname, 'uploads');
-const convertedDir = path.join(__dirname, 'converted');
+// Ensure directories exist - use /tmp on Vercel (writable directory)
+// Vercel serverless functions only allow writing to /tmp
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+const baseDir = isVercel ? '/tmp' : __dirname;
 
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-if (!fs.existsSync(convertedDir)) fs.mkdirSync(convertedDir, { recursive: true });
+const uploadsDir = path.join(baseDir, 'uploads');
+const convertedDir = path.join(baseDir, 'converted');
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log(`Created uploads directory: ${uploadsDir}`);
+}
+if (!fs.existsSync(convertedDir)) {
+  fs.mkdirSync(convertedDir, { recursive: true });
+  console.log(`Created converted directory: ${convertedDir}`);
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -64,13 +107,19 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
+  const ffmpegAvailable = fs.existsSync(ffmpegPath);
   res.json({
     status: 'OK',
     message: 'MP4 to MP3 Converter API is running',
+    environment: {
+      isVercel: isVercel,
+      baseDir: baseDir
+    },
     ffmpeg: {
       type: 'ffmpeg-static',
-      path: ffmpegStatic,
-      available: fs.existsSync(ffmpegStatic)
+      path: ffmpegPath,
+      available: ffmpegAvailable,
+      originalPath: ffmpegStatic
     }
   });
 });
